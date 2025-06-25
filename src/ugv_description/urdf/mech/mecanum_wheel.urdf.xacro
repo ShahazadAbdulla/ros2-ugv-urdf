@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <!-- Properties used for collision/inertial. Mass corrected to a reasonable value. -->
+  <xacro:property name="wheel_radius" value="0.0325" />
+  <xacro:property name="wheel_width" value="0.03040" />
+  <xacro:property name="wheel_mass" value="0.1" />
+
+  <material name="wheel_red_override">
+    <color rgba="0.788 0.114 0.133 1.0"/>
+  </material>
+
+  <!-- The macro accepts direct X, Y, Z positions for the joint. -->
+  <xacro:macro name="mecanum_wheel" params="prefix side x_pos y_pos z_pos">
+    <link name="${prefix}${side}_wheel_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="${M_PI/2} 0 0"/>
+        <geometry>
+          <mesh filename="package://ugv_description/meshes/rosmaster_x3/visual/${side}_wheel_X3.STL"/>
+        </geometry>
+        <material name="wheel_red_override"></material>
+      </visual>
+
+      <collision>
+        <origin xyz="0 0 0" rpy="${M_PI/2} 0 0"/>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+        </geometry>
+      </collision>
+
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="${wheel_mass}"/>
+        <inertia
+          ixx="${(wheel_mass/12.0) * (3*wheel_radius*wheel_radius + wheel_width*wheel_width)}" ixy="0" ixz="0"
+          iyy="${(wheel_mass/2.0) * (wheel_radius*wheel_radius)}" iyz="0"
+          izz="${(wheel_mass/12.0) * (3*wheel_radius*wheel_radius + wheel_width*wheel_width)}"/>
+      </inertial>
+    </link>
+
+    <joint name="${prefix}${side}_wheel_joint" type="continuous">
+      <axis xyz="0 1 0"/>
+      <parent link="${prefix}base_link"/>
+      <child link="${prefix}${side}_wheel_link"/>
+      <!-- The joint origin uses the direct x_pos, y_pos, z_pos parameters. -->
+      <origin xyz="${x_pos} ${y_pos} ${z_pos}" rpy="0 0 0"/>
+    </joint>
+
+    <gazebo reference="${prefix}${side}_wheel_link">
+      <surface>
+        <friction>
+          <ode>
+              <mu>1.0</mu>
+              <mu2>0.0</mu2>
+          </ode>
+        </friction>
+      </surface>
+    </gazebo>
+
+  </xacro:macro>
+</robot>

@@ -1,0 +1,101 @@
+<?xml version="1.0" ?>
+<robot name="pan_tilt" xmlns:xacro="http://ros.org/wiki/xacro">
+
+<xacro:include filename="$(find ugv_description)/urdf/mech/pan_tilt_materials.xacro" />
+
+<xacro:macro name="pan_tilt_assembly" params="prefix">
+
+  <link name="${prefix}pan_tilt_base">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.04 0.04 0.01"/></geometry>
+      <material name="matte_black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.04 0.04 0.01"/></geometry>
+    </collision>
+  </link>
+
+  <link name="${prefix}pan_tilt_base_inertial">
+    <inertial>
+      <origin xyz="3.1e-05 -2.4e-05 0.0126" rpy="0 0 0"/>
+      <mass value="0.0848"/>
+      <inertia ixx="1e-05" iyy="8e-06" izz="9e-06" ixy="0" iyz="0" ixz="0"/>
+    </inertial>
+  </link>
+
+  <link name="${prefix}tilt_motor">
+    <visual>
+      <origin xyz="-0.01243 0.016155 -0.0275" rpy="0 0 0"/>
+      <geometry><mesh filename="package://ugv_description/meshes/pan_tilt/tilt_motor.stl" scale="0.001 0.001 0.001"/></geometry>
+      <material name="matte_black"/>
+    </visual>
+    <collision>
+      <origin xyz="-0.01243 0.016155 -0.0275" rpy="0 0 0"/>
+      <geometry><mesh filename="package://ugv_description/meshes/pan_tilt/tilt_motor.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+  </link>
+
+  <link name="${prefix}pan_tilt_bracket">
+    <visual>
+      <origin xyz="0.02032 -0.017545 -0.03775" rpy="0 0 0"/>
+      <geometry><mesh filename="package://ugv_description/meshes/pan_tilt/pan_tilt_bracket.stl" scale="0.001 0.001 0.001"/></geometry>
+      <material name="matte_black"/>
+    </visual>
+    <collision>
+      <origin xyz="0.02032 -0.017545 -0.03775" rpy="0 0 0"/>
+      <geometry><mesh filename="package://ugv_description/meshes/pan_tilt/pan_tilt_bracket.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+  </link>
+
+  <link name="${prefix}pan_motor">
+    <visual>
+      <origin xyz="0.02032 -0.00042 -0.07405" rpy="0 0 0"/>
+      <geometry><mesh filename="package://ugv_description/meshes/pan_tilt/pan_motor.stl" scale="0.001 0.001 0.001"/></geometry>
+      <material name="matte_black"/>
+    </visual>
+    <collision>
+      <origin xyz="0.02032 -0.00042 -0.07405" rpy="0 0 0"/>
+      <geometry><mesh filename="package://ugv_description/meshes/pan_tilt/pan_motor.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+  </link>
+
+  <link name="${prefix}payload_link">
+    <visual>
+      <origin xyz="-0.0001099 0.0164388 -0.0939786" rpy="0 0 0"/>
+      <geometry><mesh filename="package://ugv_description/meshes/pan_tilt/payload_link.stl" scale="0.001 0.001 0.001"/></geometry>
+      <material name="matte_black"/>
+    </visual>
+    <collision>
+      <origin xyz="-0.0001099 0.0164388 -0.0939786" rpy="0 0 0"/>
+      <geometry><mesh filename="package://ugv_description/meshes/pan_tilt/payload_link.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+  </link>
+
+  <joint name="${prefix}base_inertial_fixed" type="fixed">
+    <parent link="${prefix}pan_tilt_base"/><child link="${prefix}pan_tilt_base_inertial"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <joint name="${prefix}base_tilt_fixed" type="fixed">
+    <parent link="${prefix}pan_tilt_base"/><child link="${prefix}tilt_motor"/>
+    <origin xyz="0.02 -0.0154 0.008" rpy="0 0 0"/>
+  </joint>
+  <joint name="${prefix}tilt_joint" type="continuous">
+    <parent link="${prefix}tilt_motor"/><child link="${prefix}pan_tilt_bracket"/>
+    <origin xyz="-0.03275 0.0337 0.01025" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+  <joint name="${prefix}pan_joint" type="continuous">
+    <parent link="${prefix}pan_tilt_bracket"/><child link="${prefix}pan_motor"/>
+    <origin xyz="0.0 -0.017125 0.0363" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+  <joint name="${prefix}payload_mount_fixed" type="fixed">
+    <parent link="${prefix}pan_motor"/><child link="${prefix}payload_link"/>
+    <origin xyz="0.0204299 -0.0168588 0.0199286" rpy="0 0 0"/>
+  </joint>
+
+</xacro:macro>
+
+</robot>

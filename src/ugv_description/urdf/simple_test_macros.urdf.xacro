@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <!-- Simple macro to add a "test_link" connected to a parent -->
+  <xacro:macro name="add_test_component" params="parent_link_name offset_x offset_y offset_z">
+    <link name="test_link">
+      <visual>
+        <geometry>
+          <sphere radius="0.05"/> <!-- A small sphere -->
+        </geometry>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <material name="green">
+          <color rgba="0.0 0.8 0.0 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <geometry>
+          <sphere radius="0.05"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+      </collision>
+      <inertial>
+        <mass value="0.01"/>
+        <inertia ixx="0.00001" ixy="0.0" ixz="0.0" iyy="0.00001" iyz="0.0" izz="0.00001"/>
+      </inertial>
+    </link>
+
+    <joint name="${parent_link_name}_to_test_joint" type="fixed">
+      <parent link="${parent_link_name}"/>
+      <child link="test_link"/>
+      <origin xyz="${offset_x} ${offset_y} ${offset_z}" rpy="0 0 0"/>
+    </joint>
+  </xacro:macro>
+
+</robot>

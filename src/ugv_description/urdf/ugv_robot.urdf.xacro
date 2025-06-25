@@ -1,0 +1,289 @@
+<?xml version="1.0"?>
+<robot name="ugv_robot" xmlns:xacro="http://ros.org/wiki/xacro">
+
+    <!-- Define M_PI for calculations -->
+    <xacro:property name="M_PI" value="3.1415926535897931" />
+
+    <!-- Robot Dimensions -->
+    <xacro:property name="base_plate_length" value="0.3"/>
+    <xacro:property name="base_plate_width" value="0.2"/>
+    <xacro:property name="plate_thickness" value="0.01"/>
+
+    <!-- Wheel properties needed for calculations -->
+    <xacro:property name="wheel_radius_val" value="0.0325" />
+    <xacro:property name="wheel_width_val" value="0.0304" />
+
+        <!-- Pillar and Top Plate Dimensions -->
+    <xacro:property name="pillar_height" value="0.1" />
+    <xacro:property name="pillar_radius" value="0.01" />
+    <xacro:property name="pillar_x_pos" value="${base_plate_length/2 - pillar_radius*2}" />
+    <xacro:property name="pillar_y_pos" value="${base_plate_width/2 - pillar_radius*2}" />
+
+    <!-- Vertical Placement Calculations -->
+    <xacro:property name="base_link_z_offset" value="${wheel_radius_val}" />
+    <xacro:property name="joint_z_offset" value="${wheel_radius_val}" />
+
+    <!-- Include the Mecanum Wheel Macro -->
+    <xacro:include filename="mech/mecanum_wheel.urdf.xacro" />
+
+    <!-- Include the Pillar Macro -->
+    <xacro:include filename="mech/pillar_macro.urdf.xacro" />
+
+    <!-- Include the IMU Sensor Macro -->
+    <xacro:include filename="sensors/imu.urdf.xacro" />
+
+    <!-- Include the Camera Sensor Macro -->
+    <xacro:include filename="sensors/hp60c_camera.urdf.xacro" />
+
+    <!-- Include the complete, pre-assembled Pan Tilt unit -->
+    <xacro:include filename="mech/pan_tilt_assembly.urdf.xacro" />
+
+    <!-- A dummy 'world' link. This is the absolute origin and our Fixed Frame. -->
+    <link name="world" />
+
+    <!-- The Bottom Plate (base_link) -->
+    <link name="base_link">
+        <visual>
+            <geometry>
+                <box size="${base_plate_length} ${base_plate_width} ${plate_thickness}"/>
+            </geometry>
+            <origin xyz="0 0 ${plate_thickness + wheel_radius_val}" rpy="0 0 0"/>
+            <material name="dark_gray">
+                <color rgba="0.2 0.2 0.2 1.0"/>
+            </material>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="${base_plate_length} ${base_plate_width} ${plate_thickness}"/>
+            </geometry>
+            <origin xyz="0 0 ${plate_thickness + wheel_radius_val}" rpy="0 0 0"/>
+        </collision>
+        <inertial>
+            <mass value="0.5"/>
+            <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+        </inertial>
+    </link>
+
+    <!-- This joint positions the entire robot relative to the world origin. -->
+    <joint name="world_to_base_joint" type="fixed">
+        <parent link="world" />
+        <child link="base_link" />
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+
+<!-- ******************************************************************* -->
+<!-- *                   PILLARS AND TOP PLATE                         * -->
+<!-- ******************************************************************* -->
+
+    <!-- Define the Top Plate Link -->
+    <link name="top_plate_link">
+        <visual>
+            <geometry>
+                <box size="${base_plate_length} ${base_plate_width} ${plate_thickness}"/>
+            </geometry>
+            <!-- Origin is relative to this link's frame -->
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <material name="dark_gray"/>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="${base_plate_length} ${base_plate_width} ${plate_thickness}"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="0.3"/>
+            <inertia ixx="0.0005" ixy="0.0" ixz="0.0" iyy="0.0005" iyz="0.0" izz="0.0005"/>
+        </inertial>
+    </link>
+
+    <!-- Joint to position the Top Plate relative to the base_link -->
+    <joint name="base_to_top_plate_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="top_plate_link"/>
+        <!-- Origin places top plate's frame. Z is base top + pillar height -->
+        <origin xyz="0 0 ${plate_thickness + pillar_height}" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Instantiate the four pillars using the macro -->
+    <!-- Front Left Pillar -->
+    <xacro:pillar_link prefix="fl"/>
+    <joint name="base_to_fl_pillar_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="fl_pillar_link"/>
+        <!-- Origin places pillar center. Z is base top + half pillar height -->
+        <origin xyz="${pillar_x_pos} ${pillar_y_pos} ${plate_thickness - wheel_radius_val + pillar_height}" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Front Right Pillar -->
+    <xacro:pillar_link prefix="fr"/>
+    <joint name="base_to_fr_pillar_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="fr_pillar_link"/>
+        <origin xyz="${pillar_x_pos} -${pillar_y_pos} ${plate_thickness + pillar_height - wheel_radius_val}" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Back Left Pillar -->
+    <xacro:pillar_link prefix="bl"/>
+    <joint name="base_to_bl_pillar_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="bl_pillar_link"/>
+        <origin xyz="-${pillar_x_pos} ${pillar_y_pos} ${plate_thickness + pillar_height - wheel_radius_val}" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Back Right Pillar -->
+    <xacro:pillar_link prefix="br"/>
+    <joint name="base_to_br_pillar_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="br_pillar_link"/>
+        <origin xyz="-${pillar_x_pos} -${pillar_y_pos} ${plate_thickness + pillar_height - wheel_radius_val}" rpy="0 0 0"/>
+    </joint>
+
+<!-- ******************************************************************* -->
+<!-- *                 END PILLARS AND TOP PLATE                       * -->
+<!-- ******************************************************************* -->
+
+<!-- ******************************************************************* -->
+<!-- *                          IMU SENSOR                             * -->
+<!-- ******************************************************************* -->
+
+    <!-- Instantiate the IMU sensor and attach it to the base_link -->
+    <!-- We will place it in the center of the bottom plate, slightly raised. -->
+    <xacro:imu_sensor
+        prefix=""
+        parent="base_link"
+        xyz_offset="0 0 ${plate_thickness + wheel_radius_val + 0.01}"
+        rpy_offset="1.57 0 0"
+    />
+
+<!-- ******************************************************************* -->
+<!-- *                        END IMU SENSOR                           * -->
+<!-- ******************************************************************* -->
+
+<!-- ******************************************************************* -->
+<!-- *             MOUNT THE PAN/TILT ASSEMBLY & CAMERA                * -->
+<!-- ******************************************************************* -->
+
+    <xacro:pan_tilt_assembly prefix="front_camera_"/>
+
+    <joint name="top_plate_to_pan_tilt_mount_joint" type="fixed">
+        <parent link="top_plate_link"/>
+        <child link="front_camera_pan_tilt_base"/> <!-- Use the new unique name -->
+        <origin xyz="${base_plate_length/2 - 0.02} 0 ${plate_thickness + 0.002}" rpy="0 0 0"/>
+    </joint>
+
+    <link name="camera_axle_link">
+        <visual>
+            <geometry>
+                <cylinder length="0.06" radius="0.005"/>
+            </geometry>
+            <origin xyz="0 0 0" rpy="1.57 0 0"/>
+            <material name="light_grey">
+                <color rgba="0.6 0.6 0.6 1.0"/>
+            </material>
+        </visual>
+        <collision>
+            <geometry>
+                <cylinder length="0.06" radius="0.005"/>
+            </geometry>
+            <origin xyz="0 0 0" rpy="1.57 0 0"/>
+        </collision>
+        <inertial>
+            <mass value="0.01"/>
+            <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+        </inertial>
+    </link>
+    
+    <joint name="axle_to_payload_joint" type="fixed">
+        <parent link="front_camera_payload_link"/>
+        <child link="camera_axle_link"/>
+        <origin xyz="0 0.017 0" rpy="0 0 0"/>
+    </joint>
+
+
+    <link name="camera_extension_bracket">
+        <visual>
+            <origin xyz="-0.005 0 0" rpy="0 -1.57 0"/>
+            <geometry><mesh filename="package://ugv_description/meshes/pan_tilt/camera_mount.stl" /></geometry>
+            <material name="black">
+                <color rgba="0.1 0.1 0.1 1.0"/>
+            </material>
+        </visual>
+        <collision>
+            <geometry><mesh filename="package://ugv_description/meshes/pan_tilt/camera_mount.stl" /></geometry>
+        </collision>
+        <inertial>
+            <mass value="0.01"/>
+            <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+        </inertial>
+    </link>
+
+    <joint name="payload_to_bracket_joint" type="fixed">
+        <parent link="camera_axle_link"/>
+        <child link="camera_extension_bracket"/>
+        <origin xyz="0.008 0 0" rpy="0 0 0"/>
+    </joint>
+
+    <xacro:hp60c_camera
+        prefix=""
+        camera_name="hp60c"
+        parent="camera_extension_bracket"
+        xyz_offset="0.042 0 0.0066"
+        rpy_offset="-1.57 0 1.57"
+        mesh_file="package://ugv_description/meshes/hp60c/visual/hp60c.stl"
+        mesh_scale="0.001 0.001 0.001"
+    />
+
+<!-- ******************************************************************* -->
+<!-- *           END MOUNT THE PAN/TILT ASSEMBLY & CAMERA              * -->
+<!-- ******************************************************************* -->
+
+<!-- ******************************************************************* -->
+<!-- *                     FOUR MECANUM WHEELS                         * -->
+<!-- ******************************************************************* -->
+
+<!-- Horizontal Wheel Placement (relative to base_link center) -->
+<!-- We place the wheel center slightly outside the plate for a better visual mount -->
+    <xacro:property name="wheel_x_pos" value="0.08" />
+    <xacro:property name="wheel_y_pos" value="${base_plate_width/2 + wheel_width_val/2}" />
+
+    <!-- Front Left Wheel -->
+    <xacro:mecanum_wheel
+        prefix=""
+        side="front_left"
+        x_pos="${wheel_x_pos}"
+        y_pos="${wheel_y_pos}"
+        z_pos="${joint_z_offset}"
+    />
+
+    <!-- Front Right Wheel -->
+    <xacro:mecanum_wheel
+        prefix=""
+        side="front_right"
+        x_pos="${wheel_x_pos}"
+        y_pos="-${wheel_y_pos}" 
+        z_pos="${joint_z_offset}"
+    />
+
+    <!-- Back Left Wheel -->
+    <xacro:mecanum_wheel
+        prefix=""
+        side="back_left"
+        x_pos="-${wheel_x_pos}" 
+        y_pos="${wheel_y_pos}"
+        z_pos="${joint_z_offset}"
+    />
+
+    <!-- Back Right Wheel -->
+    <xacro:mecanum_wheel
+        prefix=""
+        side="back_right"
+        x_pos="-${wheel_x_pos}" 
+        y_pos="-${wheel_y_pos}" 
+        z_pos="${joint_z_offset}"
+    />
+
+<!-- ******************************************************************* -->
+<!-- *                   END FOUR MECANUM WHEELS                       * -->
+<!-- ******************************************************************* -->
+
+</robot>
